@@ -9,5 +9,5 @@ Pusan은 카카오톡에서 내보낸 대화 기록을 KoGPT2-v2로 파인튜닝
 - MODEL_PATH: 모델을 저장하고 불러올 파일명.
 
 ## Training Pusan model
-약 70만 건의 대화 기록을 batch_size=64, epoch=20으로 돌렸을 때의 loss입니다.
+약 70만 건의 대화 기록을 batch_size=64, epoch=20으로 학습했을 때의 loss입니다. 학습에 걸린 시간은 약 9시간입니다.
 ![image](https://user-images.githubusercontent.com/86543294/220026733-507e95d8-e0b1-4abd-8223-36d5b2605569.png)
