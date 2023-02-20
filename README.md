@@ -1,4 +1,4 @@
-# Pusan - A chatbot generator from Kakaotalk conversation data
+# Pusan - AI chatbot generator from Kakaotalk conversation data
 
 Pusan은 카카오톡에서 내보낸 대화 기록을 KoGPT2-v2로 파인튜닝하여 자유주제 챗봇 PyTorch 모델을 생성합니다.
 
