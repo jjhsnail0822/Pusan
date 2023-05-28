@@ -36,7 +36,7 @@ p = kakaotalkparser.Parser()
 plist = p.parse_lines(p.txtreadlines(TXT_FILEPATH))
 dataset = p.create_merged_dataset(plist)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = "cpu" # torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 tokenizer = AutoTokenizer.from_pretrained(
     'EleutherAI/polyglot-ko-1.3b', bos_token=BOS, eos_token=EOS, unk_token=UNK, pad_token=PAD, mask_token=MASK)
 model = AutoModelForCausalLM.from_pretrained('EleutherAI/polyglot-ko-1.3b')
@@ -166,6 +166,7 @@ if torch.cuda.is_available():
 elif torch.backends.mps.is_available():
     accelerator = 'mps'
     devices = 1
+
 
 task = GenerationTask(model)
 trainer = Trainer(max_epochs=EPOCH, accelerator=accelerator, devices=devices)
