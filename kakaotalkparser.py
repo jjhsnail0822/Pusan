@@ -124,3 +124,22 @@ class Parser():
                 nowchat['text'] = chat['text']
             lastchat = chat
         return dataset
+
+# parsing test code
+
+from dotenv import load_dotenv
+import platform
+
+load_dotenv()
+
+TXT_DIR_PATH = os.environ.get('TXT_DIR_PATH')
+TXT_FILEPATH = os.environ.get('TXT_FILEPATH')
+if platform.system() == 'Darwin':
+    TXT_FILEPATH = os.environ.get('TXT_FILEPATH_MAC')
+
+p = Parser()
+
+# p.mergetxt(TXT_DIR_PATH)
+
+plist = p.parse_lines(p.txtreadlines(TXT_FILEPATH))
+dataset = p.create_merged_dataset(plist)
