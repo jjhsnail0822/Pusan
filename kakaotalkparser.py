@@ -4,6 +4,7 @@ import os
 import natsort
 import datetime as dt
 import copy
+from tqdm import tqdm
 
 # parse txt file(s) saved by kakaotalk exportation
 class Parser():
@@ -124,22 +125,57 @@ class Parser():
                 nowchat['text'] = chat['text']
             lastchat = chat
         return dataset
+    
+    # merge text in same contexts for polyglot-ko qlora models
+    # return a list of chat contexts
+    def create_context_dataset(self, parsedlist, ai_name, tokenizer, context_len=2048, context_sec=1800):
+        PREFIX_AI = '### AI:'
+        PREFIX_USER = '### USER:'
+        dataset = []
+        contextchat = PREFIX_AI if parsedlist[0]['speaker'] == ai_name else PREFIX_USER
+        contextchat = contextchat + parsedlist[0]['text']
+        contextchat_len = len(tokenizer.tokenize(contextchat))
+
+        for lastchat, nowchat in tqdm(zip(parsedlist, parsedlist[1:])):
+            nowchat_len = len(tokenizer.tokenize(nowchat['text']))
+            if contextchat_len + nowchat_len < context_len - 2 and (nowchat['time'] - lastchat['time']).seconds < context_sec: # for \n and EOS
+                    if nowchat['speaker'] == lastchat['speaker']:
+                        contextchat = contextchat + ' ' + nowchat['text']
+                    else:
+                        if nowchat['speaker'] == ai_name:
+                            contextchat = contextchat + '\n' + PREFIX_AI + nowchat['text']
+                        elif lastchat['speaker'] == ai_name:
+                            contextchat = contextchat + '\n' + PREFIX_USER + nowchat['text']
+                        else:
+                            contextchat = contextchat + '\n' + nowchat['text']
+                    contextchat_len = contextchat_len + nowchat_len
+            else:
+                if PREFIX_AI in contextchat:
+                    dataset.append(contextchat + '\n' + tokenizer.eos_token)
+                contextchat = PREFIX_AI if nowchat['speaker'] == ai_name else PREFIX_USER
+                contextchat = contextchat + nowchat['text']
+                contextchat_len = len(tokenizer.tokenize(contextchat))
+        return dataset
 
 # parsing test code
 
 from dotenv import load_dotenv
 import platform
+from transformers import AutoTokenizer
 
 load_dotenv()
 
+AI_NAME = os.environ.get('AI_NAME')
 TXT_DIR_PATH = os.environ.get('TXT_DIR_PATH')
 TXT_FILEPATH = os.environ.get('TXT_FILEPATH')
 if platform.system() == 'Darwin':
     TXT_FILEPATH = os.environ.get('TXT_FILEPATH_MAC')
+
+tokenizer = AutoTokenizer.from_pretrained('EleutherAI/polyglot-ko-5.8b')
 
 p = Parser()
 
 # p.mergetxt(TXT_DIR_PATH)
 
 plist = p.parse_lines(p.txtreadlines(TXT_FILEPATH))
-dataset = p.create_merged_dataset(plist)
+dataset = p.create_context_dataset(plist, AI_NAME, tokenizer)
