@@ -7,11 +7,11 @@ from peft import PeftConfig, PeftModel
 
 load_dotenv()
 
-PREFIX_AI = '<|unused0|>'
-PREFIX_USER = '<|unused1|>'
-EOS = '<|endoftext|>'
-MODEL_ID = 'EleutherAI/polyglot-ko-5.8b'
-PEFT_ID = 'pusan_qlora'
+PREFIX_AI = os.environ.get('PREFIX_AI')
+PREFIX_USER = os.environ.get('PREFIX_USER')
+EOS = os.environ.get('EOS')
+MODEL_ID = os.environ.get('MODEL_ID')
+PEFT_ID = os.environ.get('PEFT_ID')
 AI_NAME = os.environ.get('AI_NAME')
 TXT_FILEPATH = os.environ.get('TXT_FILEPATH')
 MODEL_PATH = os.environ.get('MODEL_PATH')

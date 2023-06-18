@@ -9,15 +9,18 @@ from peft import prepare_model_for_kbit_training, LoraConfig, get_peft_model
 
 load_dotenv()
 
-PREFIX_AI = '<|unused0|>'
-PREFIX_USER = '<|unused1|>'
-EOS = '<|endoftext|>'
-MODEL_ID = 'EleutherAI/polyglot-ko-5.8b'
-PEFT_ID = 'pusan_qlora'
+PREFIX_AI = os.environ.get('PREFIX_AI')
+PREFIX_USER = os.environ.get('PREFIX_USER')
+EOS = os.environ.get('EOS')
+MODEL_ID = os.environ.get('MODEL_ID')
+PEFT_ID = os.environ.get('PEFT_ID')
 AI_NAME = os.environ.get('AI_NAME')
 TXT_FILEPATH = os.environ.get('TXT_FILEPATH')
 MODEL_PATH = os.environ.get('MODEL_PATH')
 BATCH_SIZE = int(os.environ.get('BATCH_SIZE'))
+ACC_STEPS = int(os.environ.get('ACC_STEPS'))
+LEARNING_RATE = float(os.environ.get('LEARNING_RATE'))
+LOGGING_STEPS = int(os.environ.get('LOGGING_STEPS'))
 STEPS = int(os.environ.get('STEPS'))
 
 if platform.system() == 'Darwin':
@@ -59,11 +62,11 @@ trainer = Trainer(
     train_dataset=dataset['train'],
     args=TrainingArguments(
         per_device_train_batch_size=BATCH_SIZE,
-        gradient_accumulation_steps=1,
+        gradient_accumulation_steps=ACC_STEPS,
         max_steps=STEPS,
-        learning_rate=2e-4,
+        learning_rate=LEARNING_RATE,
         fp16=True,
-        logging_steps=10,
+        logging_steps=LOGGING_STEPS,
         output_dir=PEFT_ID
     ),
     data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
