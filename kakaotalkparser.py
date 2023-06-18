@@ -150,7 +150,7 @@ class Parser():
                             contextchat = contextchat + '\n' + nowchat['text']
                     contextchat_len = contextchat_len + nowchat_len
             else:
-                if PREFIX_AI in contextchat:
+                if PREFIX_AI in contextchat and PREFIX_USER in contextchat:
                     dataset.append(contextchat + '\n' + tokenizer.eos_token)
                 contextchat = PREFIX_AI if nowchat['speaker'] == ai_name else PREFIX_USER
                 contextchat = contextchat + nowchat['text']
