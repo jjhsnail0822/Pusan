@@ -66,6 +66,10 @@ class Parser():
                 )
                 chatspeaker = str(matchedstr.group(7))
                 chattext = str(re.sub(MATCHSTR, '', line)).strip()
+                if chattext == '사진' or chattext == '동영상' or chattext == '이모티콘' or chattext == '삭제된 메시지입니다.':
+                    continue
+                if '샵검색: #' in chattext:
+                    continue
                 parsedline = {'time': chattime, 'speaker': chatspeaker, 'text': chattext}
                 parsedlist.append(parsedline)
             else:
@@ -129,13 +133,11 @@ class Parser():
     
     # merge text in same contexts for polyglot-ko qlora models
     # return a huggingface dataset of chat contexts
-    def create_context_dataset(self, parsedlist, ai_name, tokenizer, context_len=2048, context_sec=1800):
-        PREFIX_AI = '### AI:'
-        PREFIX_USER = '### USER:'
-        prefix_ai_len = len(tokenizer.tokenize(PREFIX_AI))
-        prefix_user_len = len(tokenizer.tokenize(PREFIX_USER))
+    def create_context_dataset(self, parsedlist, ai_name, tokenizer, prefix_ai, prefix_user, context_len=2048, context_sec=1800):
+        prefix_ai_len = len(tokenizer.tokenize(prefix_ai))
+        prefix_user_len = len(tokenizer.tokenize(prefix_user))
         dataset = {'text': []}
-        contextchat = PREFIX_AI if parsedlist[0]['speaker'] == ai_name else PREFIX_USER
+        contextchat = prefix_ai if parsedlist[0]['speaker'] == ai_name else prefix_user
         contextchat = contextchat + parsedlist[0]['text']
         contextchat_len = len(tokenizer.tokenize(contextchat))
 
@@ -149,18 +151,18 @@ class Parser():
                         addchat = ' ' + nowchat['text']
                     else:
                         if nowchat['speaker'] == ai_name:
-                            addchat = '\n' + PREFIX_AI + nowchat['text']
+                            addchat = '\n' + prefix_ai + nowchat['text']
                         elif lastchat['speaker'] == ai_name:
-                            addchat = '\n' + PREFIX_USER + nowchat['text']
+                            addchat = '\n' + prefix_user + nowchat['text']
                         else:
                             addchat = '\n' + nowchat['text']
                             addchat_len = nowchat_len + 1 # for \n
                     contextchat = contextchat + addchat
                     contextchat_len = contextchat_len + addchat_len
             else:
-                if PREFIX_AI in contextchat and PREFIX_USER in contextchat:
+                if prefix_ai in contextchat and prefix_user in contextchat:
                     dataset['text'].append(contextchat + '\n' + tokenizer.eos_token)
-                contextchat = PREFIX_AI if nowchat['speaker'] == ai_name else PREFIX_USER
+                contextchat = prefix_ai if nowchat['speaker'] == ai_name else prefix_user
                 contextchat = contextchat + nowchat['text']
                 contextchat_len = len(tokenizer.tokenize(contextchat))
         dataset = DatasetDict({'train': Dataset.from_dict(dataset)})
@@ -187,4 +189,4 @@ class Parser():
 # # p.mergetxt(TXT_DIR_PATH)
 
 # plist = p.parse_lines(p.txtreadlines(TXT_FILEPATH))
-# dataset = p.create_context_dataset(plist, AI_NAME, tokenizer)
+# dataset = p.create_context_dataset(plist, AI_NAME, tokenizer, '<|unused0|>', '<|unused1|>')

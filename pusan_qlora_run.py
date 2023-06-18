@@ -7,8 +7,8 @@ from peft import PeftConfig, PeftModel
 
 load_dotenv()
 
-PREFIX_AI = '### AI:'
-PREFIX_USER = '### USER:'
+PREFIX_AI = '<|unused0|>'
+PREFIX_USER = '<|unused1|>'
 EOS = '<|endoftext|>'
 MODEL_ID = 'EleutherAI/polyglot-ko-5.8b'
 PEFT_ID = 'pusan_qlora'
@@ -36,16 +36,34 @@ model.to(device)
 model.eval()
 model.config.use_cache = True
 
-def gen(x):
+def generate_ai_chat(context, user_input):
+    context = context + PREFIX_USER + user_input.strip() + '\n' + PREFIX_AI
     gened = model.generate(
         **tokenizer(
-            f"### USER:{x}\n### AI:", 
+            context, 
             return_tensors='pt', 
             return_token_type_ids=False
         ).to(device),
-        max_new_tokens=256,
+        max_new_tokens=16,
         early_stopping=True,
         do_sample=True,
-        eos_token_id=2,
+        eos_token_id=tokenizer.eos_token_id,
+        pad_token_id=tokenizer.eos_token_id
     )
-    print(tokenizer.decode(gened[0]))
+    gened = tokenizer.decode(gened[0]).rstrip(EOS)
+    gened = gened[len(context):]
+    endidx = gened.find(PREFIX_USER)
+    if endidx != -1:
+        gened = gened[:endidx]
+    return context + gened, gened.rstrip() + '\n'
+
+def chat():
+    context = ''
+    while True:
+        user_input = input('USER> ')
+        if user_input == 'exit':
+            break
+        context, ai_output = generate_ai_chat(context, user_input)
+        print('\nAI  > ' + ai_output)
+
+chat()
