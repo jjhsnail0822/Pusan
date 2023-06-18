@@ -21,6 +21,7 @@ BATCH_SIZE = int(os.environ.get('BATCH_SIZE'))
 ACC_STEPS = int(os.environ.get('ACC_STEPS'))
 LEARNING_RATE = float(os.environ.get('LEARNING_RATE'))
 LOGGING_STEPS = int(os.environ.get('LOGGING_STEPS'))
+LR_SCHEDULER_TYPE = os.environ.get('LR_SCHEDULER_TYPE')
 STEPS = int(os.environ.get('STEPS'))
 
 if platform.system() == 'Darwin':
@@ -67,6 +68,7 @@ trainer = Trainer(
         learning_rate=LEARNING_RATE,
         fp16=True,
         logging_steps=LOGGING_STEPS,
+        lr_scheduler_type=LR_SCHEDULER_TYPE,
         output_dir=PEFT_ID
     ),
     data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
