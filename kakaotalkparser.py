@@ -5,6 +5,7 @@ import natsort
 import datetime as dt
 import copy
 from tqdm import tqdm
+from datasets import Dataset, DatasetDict
 
 # parse txt file(s) saved by kakaotalk exportation
 class Parser():
@@ -127,55 +128,63 @@ class Parser():
         return dataset
     
     # merge text in same contexts for polyglot-ko qlora models
-    # return a list of chat contexts
+    # return a huggingface dataset of chat contexts
     def create_context_dataset(self, parsedlist, ai_name, tokenizer, context_len=2048, context_sec=1800):
         PREFIX_AI = '### AI:'
         PREFIX_USER = '### USER:'
-        dataset = []
+        prefix_ai_len = len(tokenizer.tokenize(PREFIX_AI))
+        prefix_user_len = len(tokenizer.tokenize(PREFIX_USER))
+        dataset = {'text': []}
         contextchat = PREFIX_AI if parsedlist[0]['speaker'] == ai_name else PREFIX_USER
         contextchat = contextchat + parsedlist[0]['text']
         contextchat_len = len(tokenizer.tokenize(contextchat))
 
         for lastchat, nowchat in tqdm(zip(parsedlist, parsedlist[1:])):
+            prefix_len = prefix_ai_len if nowchat['speaker'] == ai_name else prefix_user_len
             nowchat_len = len(tokenizer.tokenize(nowchat['text']))
-            if contextchat_len + nowchat_len < context_len - 2 and (nowchat['time'] - lastchat['time']).seconds < context_sec: # for \n and EOS
+            addchat_len = 1 + prefix_len + nowchat_len # for \n or space
+            if contextchat_len + addchat_len < context_len - 2 and (nowchat['time'] - lastchat['time']).seconds < context_sec: # for \n and EOS
+                    addchat = ''
                     if nowchat['speaker'] == lastchat['speaker']:
-                        contextchat = contextchat + ' ' + nowchat['text']
+                        addchat = ' ' + nowchat['text']
                     else:
                         if nowchat['speaker'] == ai_name:
-                            contextchat = contextchat + '\n' + PREFIX_AI + nowchat['text']
+                            addchat = '\n' + PREFIX_AI + nowchat['text']
                         elif lastchat['speaker'] == ai_name:
-                            contextchat = contextchat + '\n' + PREFIX_USER + nowchat['text']
+                            addchat = '\n' + PREFIX_USER + nowchat['text']
                         else:
-                            contextchat = contextchat + '\n' + nowchat['text']
-                    contextchat_len = contextchat_len + nowchat_len
+                            addchat = '\n' + nowchat['text']
+                            addchat_len = nowchat_len + 1 # for \n
+                    contextchat = contextchat + addchat
+                    contextchat_len = contextchat_len + addchat_len
             else:
                 if PREFIX_AI in contextchat and PREFIX_USER in contextchat:
-                    dataset.append(contextchat + '\n' + tokenizer.eos_token)
+                    dataset['text'].append(contextchat + '\n' + tokenizer.eos_token)
                 contextchat = PREFIX_AI if nowchat['speaker'] == ai_name else PREFIX_USER
                 contextchat = contextchat + nowchat['text']
                 contextchat_len = len(tokenizer.tokenize(contextchat))
+        dataset = DatasetDict({'train': Dataset.from_dict(dataset)})
         return dataset
 
 # parsing test code
 
-from dotenv import load_dotenv
-import platform
-from transformers import AutoTokenizer
+# from dotenv import load_dotenv
+# import platform
+# from transformers import AutoTokenizer
 
-load_dotenv()
+# load_dotenv()
 
-AI_NAME = os.environ.get('AI_NAME')
-TXT_DIR_PATH = os.environ.get('TXT_DIR_PATH')
-TXT_FILEPATH = os.environ.get('TXT_FILEPATH')
-if platform.system() == 'Darwin':
-    TXT_FILEPATH = os.environ.get('TXT_FILEPATH_MAC')
+# AI_NAME = os.environ.get('AI_NAME')
+# TXT_DIR_PATH = os.environ.get('TXT_DIR_PATH')
+# TXT_FILEPATH = os.environ.get('TXT_FILEPATH')
+# if platform.system() == 'Darwin':
+#     TXT_FILEPATH = os.environ.get('TXT_FILEPATH_MAC')
 
-tokenizer = AutoTokenizer.from_pretrained('EleutherAI/polyglot-ko-5.8b')
+# tokenizer = AutoTokenizer.from_pretrained('EleutherAI/polyglot-ko-5.8b')
 
-p = Parser()
+# p = Parser()
 
-# p.mergetxt(TXT_DIR_PATH)
+# # p.mergetxt(TXT_DIR_PATH)
 
-plist = p.parse_lines(p.txtreadlines(TXT_FILEPATH))
-dataset = p.create_context_dataset(plist, AI_NAME, tokenizer)
+# plist = p.parse_lines(p.txtreadlines(TXT_FILEPATH))
+# dataset = p.create_context_dataset(plist, AI_NAME, tokenizer)
