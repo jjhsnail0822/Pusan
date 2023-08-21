@@ -44,7 +44,7 @@ bnb_config = BitsAndBytesConfig(
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
 model = AutoModelForCausalLM.from_pretrained(MODEL_ID, quantization_config=bnb_config, device_map=device)
-dataset = p.create_context_dataset(plist, AI_NAME, tokenizer, PREFIX_AI, PREFIX_USER)
+dataset = p.create_context_dataset(plist, AI_NAME, tokenizer, PREFIX_AI, PREFIX_USER, TEMPLATE)
 dataset = dataset.map(lambda x: tokenizer(x["text"]), batched=True)
 
 model.gradient_checkpointing_enable()

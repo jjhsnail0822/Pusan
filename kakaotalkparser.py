@@ -133,12 +133,12 @@ class Parser():
     
     # merge text in same contexts for polyglot-ko qlora models
     # return a huggingface dataset of chat contexts
-    def create_context_dataset(self, parsedlist, ai_name, tokenizer, prefix_ai, prefix_user, context_len=2048, context_sec=1800):
+    def create_context_dataset(self, parsedlist, ai_name, tokenizer, prefix_ai, prefix_user, template, context_len=2048, context_sec=1800):
         prefix_ai_len = len(tokenizer.tokenize(prefix_ai))
         prefix_user_len = len(tokenizer.tokenize(prefix_user))
         dataset = {'text': []}
         contextchat = prefix_ai if parsedlist[0]['speaker'] == ai_name else prefix_user
-        contextchat = contextchat + parsedlist[0]['text']
+        contextchat = template + contextchat + parsedlist[0]['text']
         contextchat_len = len(tokenizer.tokenize(contextchat))
 
         for lastchat, nowchat in tqdm(zip(parsedlist, parsedlist[1:])):
@@ -163,7 +163,7 @@ class Parser():
                 if prefix_ai in contextchat and prefix_user in contextchat:
                     dataset['text'].append(contextchat + '\n' + tokenizer.eos_token)
                 contextchat = prefix_ai if nowchat['speaker'] == ai_name else prefix_user
-                contextchat = contextchat + nowchat['text']
+                contextchat = template + contextchat + nowchat['text']
                 contextchat_len = len(tokenizer.tokenize(contextchat))
         dataset = DatasetDict({'train': Dataset.from_dict(dataset)})
         return dataset
