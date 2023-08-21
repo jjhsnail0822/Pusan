@@ -24,6 +24,9 @@ LEARNING_RATE = float(os.environ.get('LEARNING_RATE'))
 LOGGING_STEPS = int(os.environ.get('LOGGING_STEPS'))
 LR_SCHEDULER_TYPE = os.environ.get('LR_SCHEDULER_TYPE')
 STEPS = int(os.environ.get('STEPS'))
+LORA_R = int(os.environ.get('LORA_R'))
+LORA_ALPHA = int(os.environ.get('LORA_ALPHA'))
+LORA_DROPOUT = float(os.environ.get('LORA_DROPOUT'))
 
 if platform.system() == 'Darwin':
     TXT_FILEPATH = os.environ.get('TXT_FILEPATH_MAC')
@@ -48,10 +51,10 @@ model.gradient_checkpointing_enable()
 model = prepare_model_for_kbit_training(model)
 
 config = LoraConfig(
-    r=8,
-    lora_alpha=32,
+    r=LORA_R,
+    lora_alpha=LORA_ALPHA,
     target_modules=["query_key_value"],
-    lora_dropout=0.05,
+    lora_dropout=LORA_DROPOUT,
     bias="none",
     task_type="CAUSAL_LM"
 )
