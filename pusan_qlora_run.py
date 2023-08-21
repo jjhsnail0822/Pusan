@@ -27,7 +27,9 @@ bnb_config = BitsAndBytesConfig(
     bnb_4bit_compute_dtype=torch.bfloat16
 )
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() 
+                      else "mps" if torch.backends.mps.is_available()
+                      else "cpu")
 config = PeftConfig.from_pretrained(PEFT_ID)
 model = AutoModelForCausalLM.from_pretrained(config.base_model_name_or_path, quantization_config=bnb_config, device_map=device)
 model = PeftModel.from_pretrained(model, PEFT_ID)
