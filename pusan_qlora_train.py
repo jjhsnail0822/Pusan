@@ -11,6 +11,7 @@ load_dotenv()
 
 PREFIX_AI = os.environ.get('PREFIX_AI')
 PREFIX_USER = os.environ.get('PREFIX_USER')
+TEMPLATE = os.environ.get('TEMPLATE')
 EOS = os.environ.get('EOS')
 MODEL_ID = os.environ.get('MODEL_ID')
 PEFT_ID = os.environ.get('PEFT_ID')
@@ -66,7 +67,7 @@ trainer = Trainer(
         gradient_accumulation_steps=ACC_STEPS,
         max_steps=STEPS,
         learning_rate=LEARNING_RATE,
-        fp16=True,
+        bf16=True,
         logging_steps=LOGGING_STEPS,
         lr_scheduler_type=LR_SCHEDULER_TYPE,
         output_dir=PEFT_ID

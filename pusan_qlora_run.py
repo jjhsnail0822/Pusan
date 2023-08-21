@@ -9,6 +9,7 @@ load_dotenv()
 
 PREFIX_AI = os.environ.get('PREFIX_AI')
 PREFIX_USER = os.environ.get('PREFIX_USER')
+TEMPLATE = os.environ.get('TEMPLATE')
 EOS = os.environ.get('EOS')
 MODEL_ID = os.environ.get('MODEL_ID')
 PEFT_ID = os.environ.get('PEFT_ID')
@@ -52,13 +53,13 @@ def generate_ai_chat(context, user_input):
     )
     gened = tokenizer.decode(gened[0]).rstrip(EOS)
     gened = gened[len(context):]
-    endidx = gened.find(PREFIX_USER)
+    endidx = gened.find(PREFIX_USER[:2]) # find ## in the prompt
     if endidx != -1:
         gened = gened[:endidx]
     return context + gened, gened.rstrip() + '\n'
 
 def chat():
-    context = ''
+    context = TEMPLATE
     while True:
         user_input = input('USER> ')
         if user_input == 'exit':
