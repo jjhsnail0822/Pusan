@@ -53,7 +53,12 @@ model = prepare_model_for_kbit_training(model)
 config = LoraConfig(
     r=LORA_R,
     lora_alpha=LORA_ALPHA,
-    target_modules=["query_key_value"],
+    target_modules=[
+        "query_key_value",
+        "dense",
+        "dense_h_to_4h",
+        "dense_4h_to_h",
+    ],
     lora_dropout=LORA_DROPOUT,
     bias="none",
     task_type="CAUSAL_LM"
