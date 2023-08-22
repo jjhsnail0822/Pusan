@@ -16,6 +16,7 @@ PEFT_ID = os.environ.get('PEFT_ID')
 AI_NAME = os.environ.get('AI_NAME')
 TXT_FILEPATH = os.environ.get('TXT_FILEPATH')
 MODEL_PATH = os.environ.get('MODEL_PATH')
+MAX_NEW_TOKENS = int(os.environ.get('MAX_NEW_TOKENS'))
 
 if platform.system() == 'Darwin':
     TXT_FILEPATH = os.environ.get('TXT_FILEPATH_MAC')
@@ -47,7 +48,7 @@ def generate_ai_chat(context, user_input):
             return_tensors='pt', 
             return_token_type_ids=False
         ).to(device),
-        max_new_tokens=16,
+        max_new_tokens=MAX_NEW_TOKENS,
         early_stopping=True,
         do_sample=True,
         eos_token_id=tokenizer.eos_token_id,
