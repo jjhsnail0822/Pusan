@@ -1,25 +1,21 @@
 import os
 from dotenv import load_dotenv
-import platform
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from peft import PeftConfig, PeftModel
 
 load_dotenv()
 
-PREFIX_AI = os.environ.get('PREFIX_AI')
-PREFIX_USER = os.environ.get('PREFIX_USER')
-TEMPLATE = os.environ.get('TEMPLATE')
+PREFIX = os.environ.get('PREFIX')
+SUFFIX = os.environ.get('SUFFIX')
+CHAT_TEMPLATE = os.environ.get('CHAT_TEMPLATE')
 EOS = os.environ.get('EOS')
+AI_NAME = os.environ.get('AI_NAME')
+USER_NAME = os.environ.get('USER_NAME')
 MODEL_ID = os.environ.get('MODEL_ID')
 PEFT_ID = os.environ.get('PEFT_ID')
 AI_NAME = os.environ.get('AI_NAME')
-TXT_FILEPATH = os.environ.get('TXT_FILEPATH')
-MODEL_PATH = os.environ.get('MODEL_PATH')
 MAX_NEW_TOKENS = int(os.environ.get('MAX_NEW_TOKENS'))
-
-if platform.system() == 'Darwin':
-    TXT_FILEPATH = os.environ.get('TXT_FILEPATH_MAC')
 
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -41,7 +37,10 @@ model.eval()
 model.config.use_cache = True
 
 def generate_ai_chat(context, user_input):
-    context = context + PREFIX_USER + user_input.strip() + '\n' + PREFIX_AI
+    if user_input:
+        context = context + PREFIX + USER_NAME + SUFFIX + user_input.strip() + '\n\n' + PREFIX + AI_NAME + SUFFIX
+    else:
+        context = context + PREFIX + AI_NAME + SUFFIX
     gened = model.generate(
         **tokenizer(
             context, 
@@ -56,18 +55,22 @@ def generate_ai_chat(context, user_input):
     )
     gened = tokenizer.decode(gened[0]).rstrip(EOS)
     gened = gened[len(context):]
-    endidx = gened.find(PREFIX_USER[:2]) # find ## in the prompt
+    endidx = gened.find(PREFIX[:2]) # find ## in the prompt
     if endidx != -1:
         gened = gened[:endidx]
-    return context + gened, gened.rstrip() + '\n'
+    return context + gened.rstrip() + '\n\n', gened.rstrip()
 
 def chat():
-    context = TEMPLATE
+    context = CHAT_TEMPLATE
     while True:
         user_input = input('USER> ')
         if user_input == 'exit':
             break
+        elif user_input == 'reset':
+            print('-------------------------')
+            context = CHAT_TEMPLATE
+            continue
         context, ai_output = generate_ai_chat(context, user_input)
-        print('\nAI  > ' + ai_output)
+        print('AI  > ' + ai_output)
 
 chat()

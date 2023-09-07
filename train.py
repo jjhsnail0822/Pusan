@@ -1,11 +1,10 @@
 import os
 from dotenv import load_dotenv
-import kakaotalkparser
-import platform
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from transformers import Trainer, TrainingArguments, DataCollatorForLanguageModeling
-from peft import prepare_model_for_kbit_training, LoraConfig, get_peft_model
+from peft import prepare_model_for_kbit_training, LoraConfig, get_peft_model, PeftModel
+import pickle
 
 load_dotenv()
 
@@ -16,8 +15,7 @@ EOS = os.environ.get('EOS')
 MODEL_ID = os.environ.get('MODEL_ID')
 PEFT_ID = os.environ.get('PEFT_ID')
 AI_NAME = os.environ.get('AI_NAME')
-TXT_FILEPATH = os.environ.get('TXT_FILEPATH')
-MODEL_PATH = os.environ.get('MODEL_PATH')
+PKL_PATH = os.environ.get('PKL_PATH')
 BATCH_SIZE = int(os.environ.get('BATCH_SIZE'))
 ACC_STEPS = int(os.environ.get('ACC_STEPS'))
 LEARNING_RATE = float(os.environ.get('LEARNING_RATE'))
@@ -27,12 +25,8 @@ STEPS = int(os.environ.get('STEPS'))
 LORA_R = int(os.environ.get('LORA_R'))
 LORA_ALPHA = int(os.environ.get('LORA_ALPHA'))
 LORA_DROPOUT = float(os.environ.get('LORA_DROPOUT'))
-
-if platform.system() == 'Darwin':
-    TXT_FILEPATH = os.environ.get('TXT_FILEPATH_MAC')
-
-p = kakaotalkparser.Parser()
-plist = p.parse_lines(p.txtreadlines(TXT_FILEPATH))
+SAVE_STEPS = int(os.environ.get('SAVE_STEPS'))
+CONTINUE_TRAINING = int(os.environ.get('CONTINUE_TRAINING'))
 
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -46,8 +40,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available()
                       else "cpu")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
 model = AutoModelForCausalLM.from_pretrained(MODEL_ID, quantization_config=bnb_config, device_map=device)
-dataset = p.create_context_dataset(plist, AI_NAME, tokenizer, PREFIX_AI, PREFIX_USER, TEMPLATE)
-dataset = dataset.map(lambda x: tokenizer(x["text"]), batched=True)
+
+with open(PKL_PATH, 'rb') as f:
+    dataset = pickle.load(f)
 
 model.gradient_checkpointing_enable()
 model = prepare_model_for_kbit_training(model)
@@ -66,7 +61,11 @@ config = LoraConfig(
     task_type="CAUSAL_LM"
 )
 
-model = get_peft_model(model, config)
+if CONTINUE_TRAINING == 1: # 1 is True, 0 is False
+    model = PeftModel.from_pretrained(model, PEFT_ID, is_trainable=True)
+else:
+    model = get_peft_model(model, config)
+
 tokenizer.pad_token = tokenizer.eos_token
 
 trainer = Trainer(
@@ -80,11 +79,16 @@ trainer = Trainer(
         bf16=True,
         logging_steps=LOGGING_STEPS,
         lr_scheduler_type=LR_SCHEDULER_TYPE,
+        save_steps=SAVE_STEPS,
         output_dir=PEFT_ID
     ),
     data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
 )
 model.config.use_cache = False
-trainer.train()
+
+if CONTINUE_TRAINING == 1:
+    trainer.train(resume_from_checkpoint=PEFT_ID)
+else:
+    trainer.train()
 
 trainer.save_model(PEFT_ID)
