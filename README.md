@@ -6,6 +6,7 @@ Pusan은 카카오톡에서 내보낸 대화 기록에 대해 주어진 언어 �
 ```
 PREFIX = "### "
 SUFFIX = ":\n"
+CHAT_DELIMITER = "\n\n"
 CHAT_TEMPLATE = "아래는 여러 사람의 채팅 대화입니다. 이를 바탕으로 응답을 작성하세요.\n\n"
 EOS = '<|endoftext|>'
 MODEL_ID = 'nlpai-lab/kullm-polyglot-5.8b-v2'
