@@ -92,7 +92,7 @@ class Parser():
     
     # merge text in same contexts for polyglot-ko qlora models (for kakotalk)
     # return a huggingface dataset of chat contexts
-    def create_context_dataset_from_kakaotalk(self, parsedlist, ai_name, tokenizer, prefix, suffix, chat_template, context_len=2048, context_sec=1800):
+    def create_context_dataset_from_kakaotalk(self, parsedlist, ai_name, tokenizer, prefix, suffix, chat_delimiter, chat_template, context_len=2048, context_sec=1800):
         dataset = {'text': []}
         contextchat = ''
         contextchat_len = 0
@@ -101,7 +101,7 @@ class Parser():
         isAIChatInSecond = False
 
         for data in tqdm(parsedlist):
-            chat = prefix + data['speaker'] + suffix + data['text'] + '\n\n'
+            chat = prefix + data['speaker'] + suffix + data['text'] + chat_delimiter
             chat_len = len(tokenizer.tokenize(chat))
             timestamp_now = data['time']
             if not isAIChatInSecond and data['speaker'] == ai_name:
@@ -137,6 +137,7 @@ load_dotenv()
 
 PREFIX = os.environ.get('PREFIX')
 SUFFIX = os.environ.get('SUFFIX')
+CHAT_DELIMITER = os.environ.get('CHAT_DELIMITER')
 CHAT_TEMPLATE = os.environ.get('CHAT_TEMPLATE')
 MODEL_ID = os.environ.get('MODEL_ID')
 AI_NAME = os.environ.get('AI_NAME')
@@ -152,7 +153,7 @@ p = Parser()
 plist = p.parse(TXT_DIR_PATH, MERGED_FILE_PATH, DATA_PATH)
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-dataset = p.create_context_dataset_from_kakaotalk(plist, AI_NAME, tokenizer, PREFIX, SUFFIX, CHAT_TEMPLATE)
+dataset = p.create_context_dataset_from_kakaotalk(plist, AI_NAME, tokenizer, PREFIX, SUFFIX, CHAT_DELIMITER, CHAT_TEMPLATE)
 dataset = dataset.map(lambda x: tokenizer(x["text"]), batched=True)
 with open(PKL_PATH, 'wb') as f:
     pickle.dump(dataset, f)

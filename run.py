@@ -8,6 +8,7 @@ load_dotenv()
 
 PREFIX = os.environ.get('PREFIX')
 SUFFIX = os.environ.get('SUFFIX')
+CHAT_DELIMITER = os.environ.get('CHAT_DELIMITER')
 CHAT_TEMPLATE = os.environ.get('CHAT_TEMPLATE')
 EOS = os.environ.get('EOS')
 AI_NAME = os.environ.get('AI_NAME')
@@ -38,7 +39,7 @@ model.config.use_cache = True
 
 def generate_ai_chat(context, user_input):
     if user_input:
-        context = context + PREFIX + USER_NAME + SUFFIX + user_input.strip() + '\n\n' + PREFIX + AI_NAME + SUFFIX
+        context = context + PREFIX + USER_NAME + SUFFIX + user_input.strip() + CHAT_DELIMITER + PREFIX + AI_NAME + SUFFIX
     else:
         context = context + PREFIX + AI_NAME + SUFFIX
     gened = model.generate(
@@ -58,7 +59,7 @@ def generate_ai_chat(context, user_input):
     endidx = gened.find(PREFIX[:2]) # find ## in the prompt
     if endidx != -1:
         gened = gened[:endidx]
-    return context + gened.rstrip() + '\n\n', gened.rstrip()
+    return context + gened.rstrip() + CHAT_DELIMITER, gened.rstrip()
 
 def chat():
     context = CHAT_TEMPLATE
