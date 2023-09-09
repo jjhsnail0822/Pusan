@@ -111,7 +111,7 @@ class Parser():
                     isAIChatInSecond = True
                     contextchat = contextchat[cutting_point:]
                     contextchat_len = len(tokenizer.tokenize(contextchat))
-            if abs((timestamp_now - timestamp_last).seconds) < context_sec and chat_template_len + contextchat_len + chat_len < context_len - 2: # for \n and EOS
+            if max(0, (timestamp_now - timestamp_last).seconds) < context_sec and chat_template_len + contextchat_len + chat_len < context_len - 2: # for \n and EOS
                 contextchat = contextchat + chat
                 contextchat_len = contextchat_len + chat_len
             else:

@@ -8,12 +8,9 @@ import pickle
 
 if __name__ == '__main__':
     torch.multiprocessing.freeze_support()
-    
+
     load_dotenv()
 
-    PREFIX_AI = os.environ.get('PREFIX_AI')
-    PREFIX_USER = os.environ.get('PREFIX_USER')
-    TEMPLATE = os.environ.get('TEMPLATE')
     EOS = os.environ.get('EOS')
     MODEL_ID = os.environ.get('MODEL_ID')
     PEFT_ID = os.environ.get('PEFT_ID')
