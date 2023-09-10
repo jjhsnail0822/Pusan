@@ -15,7 +15,6 @@ AI_NAME = os.environ.get('AI_NAME')
 USER_NAME = os.environ.get('USER_NAME')
 MODEL_ID = os.environ.get('MODEL_ID')
 PEFT_ID = os.environ.get('PEFT_ID')
-AI_NAME = os.environ.get('AI_NAME')
 MAX_NEW_TOKENS = int(os.environ.get('MAX_NEW_TOKENS'))
 
 bnb_config = BitsAndBytesConfig(
